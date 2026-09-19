@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shiftsafe"
+version = "0.1.0"
+description = "A small, reproducible evidence gate for uncertainty-aware time-series AI under distribution shift."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Reza Ashrafii"}]
+dependencies = ["pydantic>=2.7", "pandas>=2.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.scripts]
+shiftsafe = "shiftsafe.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/shiftsafe"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
