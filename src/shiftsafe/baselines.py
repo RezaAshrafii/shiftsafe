@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pandas as pd
 
 
@@ -13,7 +15,7 @@ def regression_mean_baseline(y_train: pd.Series, n_rows: int) -> pd.Series:
     if n_rows < 1:
         raise ValueError("n_rows_must_be_positive")
     numeric = pd.to_numeric(y_train, errors="coerce")
-    if numeric.isna().any():
+    if numeric.isna().any() or not numeric.map(lambda value: math.isfinite(float(value))).all():
         raise ValueError("regression_target_must_be_numeric")
     return pd.Series([float(numeric.mean())] * n_rows)
 
@@ -25,6 +27,8 @@ def classification_majority_baseline(y_train: pd.Series, n_rows: int) -> pd.Seri
         raise ValueError("target_training_values_must_not_be_empty")
     if n_rows < 1:
         raise ValueError("n_rows_must_be_positive")
+    if y_train.isna().any():
+        raise ValueError("classification_target_must_not_contain_missing_values")
     counts = y_train.value_counts(dropna=False)
     if counts.empty:
         raise ValueError("classification_target_must_contain_a_value")

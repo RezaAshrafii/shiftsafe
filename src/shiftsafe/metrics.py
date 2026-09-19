@@ -25,6 +25,10 @@ def regression_metrics(y_true: pd.Series, y_pred: pd.Series) -> dict[str, float]
     pred = pd.to_numeric(pred, errors="coerce")
     if true.isna().any() or pred.isna().any():
         raise ValueError("regression_targets_and_predictions_must_be_numeric")
+    if not true.map(lambda value: math.isfinite(float(value))).all() or not pred.map(
+        lambda value: math.isfinite(float(value))
+    ).all():
+        raise ValueError("regression_targets_and_predictions_must_be_finite")
     errors = true - pred
     return {
         "mae": float(errors.abs().mean()),
@@ -36,6 +40,8 @@ def classification_metrics(y_true: pd.Series, y_pred: pd.Series) -> dict[str, fl
     """Return accuracy and macro balanced accuracy without sklearn."""
 
     true, pred = _aligned(y_true, y_pred)
+    if true.isna().any() or pred.isna().any():
+        raise ValueError("classification_targets_and_predictions_must_not_contain_missing_values")
     accuracy = float((true == pred).mean())
     recalls: list[float] = []
     for label in pd.unique(true):

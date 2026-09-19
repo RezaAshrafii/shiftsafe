@@ -8,9 +8,9 @@ from .contracts import DataContract, GateDecision, RunSummary
 
 
 def _required_columns(frame: pd.DataFrame, contract: DataContract) -> list[str]:
-    required = [contract.target, *contract.id_columns, *contract.group_columns]
-    if contract.time_column:
-        required.append(contract.time_column)
+    # Target and time have dedicated validation errors; this list is reserved
+    # for auxiliary identifiers and groups so reports stay unambiguous.
+    required = [*contract.id_columns, *contract.group_columns]
     return sorted(set(required))
 
 
