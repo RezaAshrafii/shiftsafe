@@ -18,6 +18,7 @@ The project starts with a deterministic quality gate. It checks whether a datase
 
 - [توضیح فارسی فاز ۱: قرارداد و گیت کیفیت](docs/PHASE_1_FA.md)
 - [توضیح فارسی فاز ۲: تفکیک بدون نشت داده](docs/PHASE_2_FA.md)
+- [توضیح فارسی فاز ۳: baseline و معیارهای پایه](docs/PHASE_3_FA.md)
 
 This first release does **not** claim model safety, legal compliance, causal impact, fairness certification, ROI, or production readiness.
 
