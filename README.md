@@ -11,6 +11,7 @@ The project starts with a deterministic quality gate. It checks whether a datase
 - Timestamp parseability and monotonic-order checks.
 - `CONTINUE`, `REWORK`, or `STOP` decision.
 - Leakage-aware temporal and whole-group train/test splits.
+- End-to-end baseline evaluation with JSON-friendly results.
 - Python API and a small CSV CLI.
 - Unit tests.
 
@@ -19,6 +20,7 @@ The project starts with a deterministic quality gate. It checks whether a datase
 - [توضیح فارسی فاز ۱: قرارداد و گیت کیفیت](docs/PHASE_1_FA.md)
 - [توضیح فارسی فاز ۲: تفکیک بدون نشت داده](docs/PHASE_2_FA.md)
 - [توضیح فارسی فاز ۳: baseline و معیارهای پایه](docs/PHASE_3_FA.md)
+- [توضیح فارسی فاز ۴: اجرای end-to-end baseline](docs/PHASE_4_FA.md)
 
 This first release does **not** claim model safety, legal compliance, causal impact, fairness certification, ROI, or production readiness.
 
