@@ -16,6 +16,7 @@ def _required_columns(frame: pd.DataFrame, contract: DataContract) -> list[str]:
 
 def _decision(checks: dict[str, Any]) -> GateDecision:
     reasons: list[str] = []
+    reasons.extend(checks["validation_errors"])
     if checks["missing_required_columns"]:
         reasons.append("required_columns_missing")
     if checks["target_missing"] > 0:
@@ -27,7 +28,14 @@ def _decision(checks: dict[str, Any]) -> GateDecision:
     if checks["temporal_ordered"] is False:
         reasons.append("time_column_is_not_monotonic")
 
-    if any(reason in reasons for reason in ("required_columns_missing", "target_contains_missing_values")):
+    stop_reasons = {
+        "dataset_is_empty",
+        "target_column_missing",
+        "time_column_missing",
+        "required_columns_missing",
+        "target_contains_missing_values",
+    }
+    if any(reason in reasons for reason in stop_reasons):
         return GateDecision(status="STOP", reasons=reasons)
     if reasons:
         return GateDecision(status="REWORK", reasons=reasons)
@@ -38,6 +46,13 @@ def run_quality_gate(frame: pd.DataFrame, contract: DataContract) -> RunSummary:
     """Run deterministic, pre-model checks on a tabular time-series frame."""
 
     missing_columns = [name for name in _required_columns(frame, contract) if name not in frame]
+    validation_errors: list[str] = []
+    if frame.empty:
+        validation_errors.append("dataset_is_empty")
+    if contract.target not in frame:
+        validation_errors.append("target_column_missing")
+    if contract.time_column and contract.time_column not in frame:
+        validation_errors.append("time_column_missing")
     time_parseable: bool | None = None
     temporal_ordered: bool | None = None
     if contract.time_column and contract.time_column in frame:
@@ -47,6 +62,7 @@ def run_quality_gate(frame: pd.DataFrame, contract: DataContract) -> RunSummary:
 
     checks: dict[str, Any] = {
         "missing_required_columns": missing_columns,
+        "validation_errors": validation_errors,
         "missing_columns": int(frame.isna().sum().sum()),
         "duplicate_rows": int(frame.duplicated().sum()),
         "target_missing": int(frame[contract.target].isna().sum()) if contract.target in frame else 0,

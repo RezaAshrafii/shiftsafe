@@ -6,6 +6,7 @@ from .contracts import RunSummary
 def to_markdown(summary: RunSummary) -> str:
     decision = summary.decision
     reason_text = ", ".join(decision.reasons) if decision.reasons else "none"
+    validation_errors = ", ".join(summary.checks.get("validation_errors", [])) or "none"
     return f"""# ShiftSafe quality-gate report
 
 ## Decision
@@ -13,6 +14,8 @@ def to_markdown(summary: RunSummary) -> str:
 `{decision.status}`
 
 Reasons: `{reason_text}`
+
+Validation errors: `{validation_errors}`
 
 ## Dataset summary
 
