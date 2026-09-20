@@ -65,6 +65,8 @@ def run_shift_stress_evaluation(
         raise ValueError("target_column_contains_missing_values")
     if target_column in feature_columns or split_column in feature_columns:
         raise ValueError("target_or_split_column_must_not_be_a_feature")
+    if len(feature_columns) != len(set(feature_columns)):
+        raise ValueError("feature_columns_must_be_unique")
     contract = DataContract(
         target=target_column,
         time_column=split_column if split_strategy == "temporal" else None,
@@ -92,19 +94,59 @@ def run_shift_stress_evaluation(
     shifted_intervals = prediction_interval(shifted_predictions, radius)
     reference_baseline = regression_mean_baseline(train[target_column], len(reference_test))
     shifted_baseline = regression_mean_baseline(train[target_column], len(shifted_test))
+    nominal_coverage = 1 - alpha
+    reference_interval_metrics = interval_metrics(reference_test[target_column], reference_intervals)
+    shifted_interval_metrics = interval_metrics(reference_test[target_column], shifted_intervals)
+
+    def interval_report(metrics: dict[str, float]) -> dict[str, object]:
+        gap = metrics["coverage"] - nominal_coverage
+        return {
+            **metrics,
+            "nominal_coverage": nominal_coverage,
+            "coverage_gap": gap,
+            "coverage_status": "below_nominal" if gap < 0 else "at_or_above_nominal",
+        }
+
+    reference_rows = reference_test[target_column].reset_index(drop=True)
+    reference_intervals_reset = reference_intervals.reset_index(drop=True)
+    shifted_intervals_reset = shifted_intervals.reset_index(drop=True)
+    reference_predictions_reset = reference_predictions.reset_index(drop=True)
+    shifted_predictions_reset = shifted_predictions.reset_index(drop=True)
+    interval_rows = []
+    for row_number, actual_value in reference_rows.items():
+        reference_row = reference_intervals_reset.iloc[row_number]
+        shifted_row = shifted_intervals_reset.iloc[row_number]
+        actual = float(actual_value)
+        interval_rows.append(
+            {
+                "row": row_number,
+                "actual": actual,
+                "reference_prediction": float(reference_predictions_reset.iloc[row_number]),
+                "shifted_prediction": float(shifted_predictions_reset.iloc[row_number]),
+                "reference_lower": float(reference_row["lower"]),
+                "reference_upper": float(reference_row["upper"]),
+                "shifted_lower": float(shifted_row["lower"]),
+                "shifted_upper": float(shifted_row["upper"]),
+                "reference_covered": bool(reference_row["lower"] <= actual <= reference_row["upper"]),
+                "shifted_covered": bool(shifted_row["lower"] <= actual <= shifted_row["upper"]),
+            }
+        )
     return {
         "shift_kind": shift_kind,
         "shift_magnitude": shift_magnitude,
+        "shift_columns": feature_columns,
+        "shift_semantics": "covariate_shift_only_target_held_fixed",
         "radius_frozen_from_reference": radius,
         "reference": {
             "point_metrics": regression_metrics(reference_test[target_column], reference_predictions),
             "baseline_metrics": regression_metrics(reference_test[target_column], reference_baseline),
-            "interval_metrics": interval_metrics(reference_test[target_column], reference_intervals),
+            "interval_metrics": interval_report(reference_interval_metrics),
         },
         "shifted": {
             "point_metrics": regression_metrics(reference_test[target_column], shifted_predictions),
             "baseline_metrics": regression_metrics(reference_test[target_column], shifted_baseline),
-            "interval_metrics": interval_metrics(reference_test[target_column], shifted_intervals),
+            "interval_metrics": interval_report(shifted_interval_metrics),
         },
+        "interval_rows": interval_rows,
         "quality_gate": gate.model_dump(mode="json"),
     }

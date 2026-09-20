@@ -46,9 +46,14 @@ def test_shift_evaluation_reports_reference_and_shifted_metrics() -> None:
     )
 
     assert result["shift_kind"] == "mean"
+    assert result["shift_columns"] == ["sensor"]
+    assert result["shift_semantics"] == "covariate_shift_only_target_held_fixed"
     assert result["radius_frozen_from_reference"] >= 0
     assert result["reference"]["interval_metrics"]["coverage"] >= 0
     assert result["shifted"]["interval_metrics"]["coverage"] >= 0
+    assert len(result["interval_rows"]) == 4
+    assert result["reference"]["point_metrics"] != result["shifted"]["point_metrics"]
+    assert "coverage_gap" in result["shifted"]["interval_metrics"]
 
 
 def test_shift_evaluation_rejects_unknown_strategy() -> None:
@@ -61,6 +66,23 @@ def test_shift_evaluation_rejects_unknown_strategy() -> None:
             ["sensor"],
             "random",
             split_column="group",
+            shift_kind="mean",
+            shift_magnitude=1.0,
+        )
+
+
+def test_shift_evaluation_rejects_duplicate_features() -> None:
+    frame = pd.DataFrame(
+        {"timestamp": pd.date_range("2026-01-01", periods=6), "sensor": range(6), "target": range(6)}
+    )
+
+    with pytest.raises(ValueError, match="feature_columns_must_be_unique"):
+        run_shift_stress_evaluation(
+            frame,
+            "target",
+            ["sensor", "sensor"],
+            "temporal",
+            split_column="timestamp",
             shift_kind="mean",
             shift_magnitude=1.0,
         )
