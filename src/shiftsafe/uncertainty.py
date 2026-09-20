@@ -7,8 +7,10 @@ import math
 import numpy as np
 import pandas as pd
 
+from .baselines import regression_mean_baseline
 from .checks import run_quality_gate
 from .contracts import DataContract
+from .metrics import regression_metrics
 from .modeling import fit_linear_regression, predict_linear_regression
 from .splitting import group_split, temporal_split
 
@@ -28,8 +30,8 @@ def conformal_radius(
         raise ValueError("alpha_must_be_between_0_and_1")
     if len(y_calibration) != len(calibration_predictions):
         raise ValueError("calibration_lengths_must_match")
-    if len(y_calibration) == 0:
-        raise ValueError("calibration_data_must_not_be_empty")
+    if len(y_calibration) < 3:
+        raise ValueError("calibration_data_must_have_at_least_three_rows")
     y = pd.to_numeric(pd.Series(y_calibration), errors="coerce")
     prediction = pd.to_numeric(pd.Series(calibration_predictions), errors="coerce")
     if y.isna().any() or prediction.isna().any():
@@ -68,6 +70,12 @@ def interval_metrics(y_true: pd.Series, intervals: pd.DataFrame) -> dict[str, fl
         raise ValueError("interval_lengths_must_match")
     if truth.isna().any() or lower.isna().any() or upper.isna().any():
         raise ValueError("interval_values_must_be_numeric")
+    if not np.isfinite(truth.to_numpy()).all() or not np.isfinite(lower.to_numpy()).all() or not np.isfinite(
+        upper.to_numpy()
+    ).all():
+        raise ValueError("interval_values_must_be_finite")
+    if (lower > upper).any():
+        raise ValueError("interval_lower_must_not_exceed_upper")
     covered = (truth >= lower) & (truth <= upper)
     return {"coverage": float(covered.mean()), "mean_width": float((upper - lower).mean())}
 
@@ -122,14 +130,39 @@ def run_split_conformal_evaluation(
     radius = conformal_radius(calibration[target_column], calibration_predictions, alpha)
     intervals = prediction_interval(test_predictions, radius)
     metrics = interval_metrics(test[target_column], intervals)
+    point_metrics = regression_metrics(test[target_column], test_predictions)
+    baseline_predictions = regression_mean_baseline(train[target_column], len(test))
+    baseline_metrics = regression_metrics(test[target_column], baseline_predictions)
+    nominal_coverage = 1 - alpha
+    coverage_gap = metrics["coverage"] - nominal_coverage
+    interval_rows = []
+    truth = test[target_column].reset_index(drop=True)
+    for row_number, row in intervals.reset_index(drop=True).iterrows():
+        actual = float(truth.iloc[row_number])
+        interval_rows.append(
+            {
+                "row": row_number,
+                "actual": actual,
+                "prediction": float(row["prediction"]),
+                "lower": float(row["lower"]),
+                "upper": float(row["upper"]),
+                "covered": bool(row["lower"] <= actual <= row["upper"]),
+            }
+        )
     return {
         "method": "split_conformal_absolute_residual",
         "alpha": alpha,
-        "nominal_coverage": 1 - alpha,
+        "nominal_coverage": nominal_coverage,
+        "coverage_gap": coverage_gap,
+        "coverage_status": "below_nominal" if coverage_gap < 0 else "at_or_above_nominal",
         "radius": radius,
         "train_rows": len(train),
         "calibration_rows": len(calibration),
         "test_rows": len(test),
+        "point_metrics": point_metrics,
+        "baseline": "training_mean",
+        "baseline_metrics": baseline_metrics,
         "interval_metrics": metrics,
+        "interval_rows": interval_rows,
         "quality_gate": gate.model_dump(mode="json"),
     }

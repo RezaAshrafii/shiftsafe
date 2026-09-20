@@ -23,8 +23,15 @@ def test_conformal_interval_reports_coverage_and_width() -> None:
 def test_conformal_rejects_invalid_alpha_and_empty_calibration() -> None:
     with pytest.raises(ValueError, match="alpha_must_be"):
         conformal_radius(pd.Series([1.0]), pd.Series([1.0]), alpha=1.0)
-    with pytest.raises(ValueError, match="calibration_data_must_not_be_empty"):
+    with pytest.raises(ValueError, match="calibration_data_must_have_at_least_three_rows"):
         conformal_radius(pd.Series(dtype=float), pd.Series(dtype=float))
+
+
+def test_interval_metrics_rejects_invalid_bounds_and_non_finite_values() -> None:
+    with pytest.raises(ValueError, match="lower_must_not_exceed_upper"):
+        interval_metrics(pd.Series([1.0]), pd.DataFrame({"lower": [2.0], "upper": [1.0]}))
+    with pytest.raises(ValueError, match="values_must_be_finite"):
+        interval_metrics(pd.Series([1.0]), pd.DataFrame({"lower": [float("inf")], "upper": [2.0]}))
 
 
 def test_split_conformal_pipeline_is_deterministic() -> None:
@@ -60,6 +67,10 @@ def test_split_conformal_pipeline_is_deterministic() -> None:
     assert first == second
     assert first["nominal_coverage"] == 0.9
     assert first["interval_metrics"]["mean_width"] >= 0
+    assert len(first["interval_rows"]) == first["test_rows"]
+    assert "point_metrics" in first
+    assert "baseline_metrics" in first
+    assert first["coverage_status"] in {"below_nominal", "at_or_above_nominal"}
 
 
 def test_split_conformal_rejects_invalid_calibration_fraction() -> None:
