@@ -14,6 +14,7 @@ The project starts with a deterministic quality gate. It checks whether a datase
 - End-to-end baseline evaluation with JSON-friendly results.
 - A deterministic numeric linear-regression experiment with train-only fitting.
 - A minimal split-conformal prediction interval baseline with coverage and width metrics.
+- Deterministic mean/scale distribution-shift stress tests with reference-vs-shifted metrics.
 - Python API and a small CSV CLI.
 - Unit tests.
 
@@ -25,6 +26,7 @@ The project starts with a deterministic quality gate. It checks whether a datase
 - [توضیح فارسی فاز ۴: اجرای end-to-end baseline](docs/PHASE_4_FA.md)
 - [توضیح فارسی فاز ۵: مدل رگرسیون آزمایشی](docs/PHASE_5_FA.md)
 - [توضیح فارسی فاز ۶: prediction interval و conformal baseline](docs/PHASE_6_FA.md)
+- [توضیح فارسی فاز ۷: آزمون distribution shift](docs/PHASE_7_FA.md)
 
 This first release does **not** claim model safety, legal compliance, causal impact, fairness certification, ROI, or production readiness.
 
