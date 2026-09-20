@@ -12,6 +12,7 @@ The project starts with a deterministic quality gate. It checks whether a datase
 - `CONTINUE`, `REWORK`, or `STOP` decision.
 - Leakage-aware temporal and whole-group train/test splits.
 - End-to-end baseline evaluation with JSON-friendly results.
+- A deterministic numeric linear-regression experiment with train-only fitting.
 - Python API and a small CSV CLI.
 - Unit tests.
 
@@ -21,6 +22,7 @@ The project starts with a deterministic quality gate. It checks whether a datase
 - [توضیح فارسی فاز ۲: تفکیک بدون نشت داده](docs/PHASE_2_FA.md)
 - [توضیح فارسی فاز ۳: baseline و معیارهای پایه](docs/PHASE_3_FA.md)
 - [توضیح فارسی فاز ۴: اجرای end-to-end baseline](docs/PHASE_4_FA.md)
+- [توضیح فارسی فاز ۵: مدل رگرسیون آزمایشی](docs/PHASE_5_FA.md)
 
 This first release does **not** claim model safety, legal compliance, causal impact, fairness certification, ROI, or production readiness.
 

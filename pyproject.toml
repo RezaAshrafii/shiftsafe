@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [{name = "Reza Ashrafii"}]
-dependencies = ["pydantic>=2.7", "pandas>=2.0"]
+dependencies = ["pydantic>=2.7", "pandas>=2.0", "numpy>=1.26"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
